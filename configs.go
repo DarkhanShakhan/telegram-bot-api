@@ -2,6 +2,7 @@ package tgbotapi
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
@@ -2565,4 +2566,32 @@ func prepareInputMediaForFiles(inputMedia []interface{}) []RequestFile {
 	}
 
 	return files
+}
+
+type CustomMessageConfig struct {
+	ChatID      int64
+	Text        string
+	ReplyMarkup CustomReplyMarkup
+}
+
+type CustomReplyMarkup struct {
+	InlineKeyboard [][]InlineKeyboardButton `json:"inline_keyboard"`
+	RemoveKeyboard bool                     `json:"remove_keyboard"`
+	Selective      bool                     `json:"seletive"`
+}
+
+func (c CustomMessageConfig) method() string {
+	return "sendMessage"
+}
+
+func (c CustomMessageConfig) params() (Params, error) {
+	params := make(Params)
+	b, err := json.Marshal(c.ReplyMarkup)
+	if err != nil {
+		return nil, err
+	}
+	params["reply_markup"] = string(b)
+	params.AddNonEmpty("text", c.Text)
+	params.AddNonZero64("chat_id", c.ChatID)
+	return params, nil
 }
